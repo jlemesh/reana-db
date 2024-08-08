@@ -453,7 +453,6 @@ class InteractiveSession(Base, Timestamp, QuotaBase):
         return "<InteractiveSession %r>" % self.name
 
 
-
 class Workflow(Base, Timestamp, QuotaBase):
     """Workflow table."""
 
@@ -733,7 +732,7 @@ class Workflow(Base, Timestamp, QuotaBase):
 
     @staticmethod
     def update_workflow_status(
-        db_session, workflow_uuid, status, new_logs="", message=None, pod_name=None
+        db_session, workflow_uuid, status, new_logs="", message=None
     ):
         """Update database workflow status.
 
@@ -753,8 +752,6 @@ class Workflow(Base, Timestamp, QuotaBase):
                 workflow.status = status
             if new_logs:
                 workflow.logs = (workflow.logs or "") + new_logs + "\n"
-            if pod_name:
-                workflow.pod_name = pod_name
             db_session.commit()
         except Exception as e:
             raise e
