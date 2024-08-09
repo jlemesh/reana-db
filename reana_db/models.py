@@ -496,6 +496,7 @@ class Workflow(Base, Timestamp, QuotaBase):
     retention_rules = relationship(
         "WorkspaceRetentionRule", backref="workflow", lazy="dynamic"
     )
+    pod_name = Column(String(256))
 
     __table_args__ = (
         UniqueConstraint(
@@ -837,6 +838,7 @@ class Job(Base, Timestamp):
     finished_at = Column(DateTime)
     prettified_cmd = Column(JSONType)
     job_name = Column(Text)
+    pod_name = Column(String(256))
 
     __table_args__ = (
         Index(None, "workflow_uuid", "created"),
