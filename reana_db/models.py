@@ -453,6 +453,22 @@ class InteractiveSession(Base, Timestamp, QuotaBase):
         return "<InteractiveSession %r>" % self.name
 
 
+class WorkflowLog(Base, Timestamp):
+    """WorkflowLog table."""
+
+    __tablename__ = "workflow_log"
+
+    id_ = Column(UUIDType, primary_key=True, default=generate_uuid)
+    workflow_id = Column(UUIDType, ForeignKey("__reana.workflow.id_"))
+    log = Column(String, nullable=True)
+    time = Column(DateTime)
+
+    __table_args__ = (
+        Index(None, "time"),
+        {"schema": "__reana"},
+    )
+
+
 class Workflow(Base, Timestamp, QuotaBase):
     """Workflow table."""
 
@@ -496,6 +512,8 @@ class Workflow(Base, Timestamp, QuotaBase):
     retention_rules = relationship(
         "WorkspaceRetentionRule", backref="workflow", lazy="dynamic"
     )
+    log = relationship("WorkflowLog", order_by=WorkflowLog.__table__.columns.time)
+    pod_name = Column(String(256))
 
     __table_args__ = (
         UniqueConstraint(
@@ -731,7 +749,7 @@ class Workflow(Base, Timestamp, QuotaBase):
 
     @staticmethod
     def update_workflow_status(
-        db_session, workflow_uuid, status, new_logs="", message=None
+        db_session, workflow_uuid, status, new_logs="", message=None, pod_name=None
     ):
         """Update database workflow status.
 
@@ -751,6 +769,8 @@ class Workflow(Base, Timestamp, QuotaBase):
                 workflow.status = status
             if new_logs:
                 workflow.logs = (workflow.logs or "") + new_logs + "\n"
+            if pod_name:
+                workflow.pod_name = pod_name
             db_session.commit()
         except Exception as e:
             raise e
@@ -816,6 +836,22 @@ def workflow_status_change_listener(workflow, new_status, old_status, initiator)
     return new_status
 
 
+class JobLog(Base, Timestamp):
+    """JobLog table."""
+
+    __tablename__ = "job_log"
+
+    id_ = Column(UUIDType, primary_key=True, default=generate_uuid)
+    job_id = Column(UUIDType, ForeignKey("__reana.job.id_"))
+    log = Column(String, nullable=True)
+    time = Column(DateTime)
+
+    __table_args__ = (
+        Index(None, "time"),
+        {"schema": "__reana"},
+    )
+
+
 class Job(Base, Timestamp):
     """Job table."""
 
@@ -837,6 +873,8 @@ class Job(Base, Timestamp):
     finished_at = Column(DateTime)
     prettified_cmd = Column(JSONType)
     job_name = Column(Text)
+    log = relationship("JobLog", order_by=JobLog.__table__.columns.time)
+    pod_name = Column(String(256))
 
     __table_args__ = (
         Index(None, "workflow_uuid", "created"),
